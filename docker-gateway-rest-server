@@ -47,5 +47,6 @@ def main():
     rest_server_main(
         ['', os.environ.get('HOST'), os.environ.get('PORT'), '--log-stdout'])
 
+
 if __name__ == '__main__':
     main()

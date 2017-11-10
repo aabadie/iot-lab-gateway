@@ -31,7 +31,7 @@ Command line arguments for docker-run:
     optional arguments:
       --help
       -v VOLUME, --volume VOLUME
-                            Host directory containing gateway_code (default: None)
+                            Host directory containing the gateway code, usually gateway_code (default: None)
       -b BOARD_TYPE, --board-type BOARD_TYPE
                             Set node board type (default: m3)
       -h HOSTNAME, --hostname HOSTNAME
