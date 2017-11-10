@@ -61,7 +61,7 @@ You can mount your gateway_code and have the gateway API auto reload on code cha
 
 You can have the gateway run in the background by using a `-d` or `--daemon` argument
 
-    ./docker-run -v
+    ./docker-run -d
 
 Instead of launching the API, you can do something inside the container, like building the control node C interface:
 
