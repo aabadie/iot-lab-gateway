@@ -73,7 +73,7 @@ def main(args):
       --privileged \
       {0.device_on_cn_tty} \
       {0.daemon} \
-      fitiotlab/iot-lab-gateway \
+      iot-lab-gateway \
       {1}
     '''.format(args, cmd, cfg_dir)
 

@@ -12,7 +12,7 @@ For the following commands sudo might be needed depending on whether your user i
 
 To build the image :
 
-    docker build -t fitiotlab/iot-lab-gateway .
+    docker build -t iot-lab-gateway .
 
 To run the image:
 
