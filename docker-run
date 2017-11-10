@@ -30,8 +30,8 @@ import tempfile
 
 def main(args):
     args.volume = ('-v {}:/home/iot-lab-gateway/gateway_code'
-                   .format(os.path.abspath(args.volume)
-                           if args.volume is not None else ''))
+                   .format(os.path.abspath(args.volume))
+                           if args.volume is not None else '')
     args.daemon = '-d' if args.daemon else '--rm'
     args.reloader = '-e RELOADER=1' if args.reloader else ''
 
