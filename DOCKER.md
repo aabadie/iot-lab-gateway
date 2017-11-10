@@ -12,7 +12,7 @@ For the following commands sudo might be needed depending on whether your user i
 
 To build the image :
 
-    ./docker-build
+    docker build -t fitiotlab/iot-lab-gateway .
 
 To run the image:
 
@@ -93,5 +93,4 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
         $ VBoxManage controlvm default natpf1 "bottle,tcp,127.0.0.1,8080,,8080"
         $ VBoxManage controlvm default natpf1 "serial_redirection,tcp,127.0.0.1,20000,,20000"
 
-Run `docker-build`and `docker-run` as explained above.
->>>>>>> 512ae0d... add documentation to run in a Docker container under macOS
+Build the docker image and run `docker-run` as explained above.
