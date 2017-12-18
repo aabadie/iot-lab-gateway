@@ -135,23 +135,22 @@ class SerialExpectForSocket(SerialExpect):
         self.logger = logger
 
     @staticmethod
-    def try_connect(url, tries=10, step=0.5, *args, **kwargs):
+    def try_connect(url, tries=10, step=0.5, **kwargs):
         """ Try connecting 'tries' time to url tuple
         Sleep 'step' between each tries.
         If last trial fails, the SerialException is raised
 
         The goal is to be resilient to the fact that serial_aggregator might be
         (re)starting.  """
-        # pylint:disable=keyword-arg-before-vararg
         # Run 'tries -1' times with 'try except'
         for _ in range(0, tries - 1):
             try:
-                return serial.serial_for_url(url, *args, **kwargs)
+                return serial.serial_for_url(url, **kwargs)
             except serial.SerialException:
                 time.sleep(step)
 
         # Last connection should run an exception
-        return serial.serial_for_url(url, *args, **kwargs)
+        return serial.serial_for_url(url, **kwargs)
 
     def close(self):
         """ Close connection and wait until it's restartable """
