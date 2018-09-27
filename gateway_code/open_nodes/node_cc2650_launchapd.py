@@ -28,7 +28,7 @@ from gateway_code.open_nodes.common.node_simple_link import NodeSimpleLinkBase
 class NodeCC2650Launchpad(NodeSimpleLinkBase):
     """ Open node TI CC2650 Launchpad implemention """
 
-    TYPE = 'cc2650-launchpad'
+    TYPE = 'cc2650_launchpad'
     OPENOCD_CFG_FILE = static_path('cc2650-launchpad.cfg')
     FW_IDLE = static_path('cc2650-launchpad_idle.elf')
     FW_AUTOTEST = static_path('cc2650-launchpad_autotest.elf')
