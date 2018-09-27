@@ -101,6 +101,21 @@ RUN git clone https://github.com/ntfreak/openocd openocd-dev && \
     make install && \
     cd .. && rm -rf openocd-dev
 
+#To do http requests (to upload an experiment for instance)
+RUN apt-get update && \
+    apt-get install -y \
+        unzip && \
+    apt-get clean
+
+#simplelink openocd 0.10.0
+RUN curl -L -O http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/simplelink-openocd/latest/exports/simplelink_openocd_1_0.zip && \
+    unzip -p simplelink_openocd_1_0.zip master.gz | tar xvz && \
+    cd sdo-emu-openocd/openocd && \
+    ./configure --prefix=/opt/simplelink-openocd-0.10.0 --enable-cmsis-dap --enable-hidapi-libusb && \
+    make && \
+    sudo make install && \
+    cd ../.. && rm -rf sdo-emu-openocd
+
 # edbg
 RUN git clone https://github.com/ataradov/edbg && \
     cd edbg && \
