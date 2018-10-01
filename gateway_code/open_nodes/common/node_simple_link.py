@@ -40,7 +40,7 @@ class NodeSimpleLinkBase(OpenNodeBase):
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/iotlab/ttyON_SIMPLELINK'
     BAUDRATE = 115200
-    OPENOCD_PATH = '/opt/simplelink-openocd-0.10.0/bin/openocd'
+    OPENOCD_PATH = '/opt/ti-openocd-0.10.0/bin/openocd'
     DIRTY_SERIAL = True
 
     AUTOTEST_AVAILABLE = [
