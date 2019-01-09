@@ -77,7 +77,7 @@ if sys.version_info[0] < 3:
     SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
-INSTALL_REQUIRES += ['pyelftools']
+INSTALL_REQUIRES += ['pyelftools', 'intelhex']
 if sys.version_info[0] < 3:
     # Python3 backports of subprocess, support 'timeout' option
     INSTALL_REQUIRES += ['subprocess32']

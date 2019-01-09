@@ -23,6 +23,7 @@
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_simple_link import NodeSimpleLinkBase
+from gateway_code.utils.cc2650_fw_verifier import Cc2650FirmwareVerifier
 
 
 class NodeCC2650Launchpad(NodeSimpleLinkBase):
@@ -32,3 +33,10 @@ class NodeCC2650Launchpad(NodeSimpleLinkBase):
     OPENOCD_CFG_FILE = static_path('cc2650-launchpad.cfg')
     FW_IDLE = static_path('cc2650-launchpad_idle.elf')
     FW_AUTOTEST = static_path('cc2650-launchpad_autotest.elf')
+    VERIFIER = Cc2650FirmwareVerifier()
+
+    def flash(self, firmware_path=None):
+        firmware_path = firmware_path or self.FW_IDLE
+        if self.VERIFIER.has_valid_ccfg(firmware_path):
+            return super(NodeCC2650Launchpad, self).flash(firmware_path)
+        return 1
