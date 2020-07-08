@@ -21,14 +21,21 @@
 
 """ Open Node SiFive HiFive1b experiment implementation """
 
+import logging
+import time
+
+from gateway_code import common
+from gateway_code.common import logger_call
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+
+LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeHifive1b(NodeOpenOCDBase):
     """ Open node SiFive HiFive1b implementation """
 
-    ELF_TARGET = ('ELFCLASS32', 'EM_RISCV')
+    ELF_TARGET = ('ELFCLASS32', 243)
     TYPE = 'hifive1b'
     OPENOCD_CFG_FILE = static_path('iot-lab-hifive1b.cfg')
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
@@ -37,3 +44,38 @@ class NodeHifive1b(NodeOpenOCDBase):
     FW_AUTOTEST = static_path('hifive1b_autotest.elf')
     TTY = '/dev/iotlab/ttyON_HIFIVE1B'
     BAUDRATE = 115200
+
+    @logger_call("Node Hifive1b: Setup of hifive1b node")
+    def setup(self, firmware_path):
+        """ Flash open node, create serial redirection """
+        # This board takes a little less than 1s to boot and cannot be flashed
+        # during that time.
+        time.sleep(1)
+        ret_val = 0
+        common.wait_no_tty(self.TTY)
+        ret_val += common.wait_tty(self.TTY, LOGGER)
+        ret_val += self.flash(firmware_path)
+        ret_val += self.serial_redirection.start()
+        return ret_val
+
+    @logger_call("Node Hifive1b: flash of hifive1b node")
+    def flash(self, firmware_path=None, binary=False, offset=0):
+        """ Flash the given firmware on hifive1b node
+
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+                              If None, flash 'idle' firmware.
+        :param binary: if True, flashes a binary file
+        :param offset: the offset at which to flash the binary file
+        """
+        if binary:
+            LOGGER.error('FLASH: binary mode not supported with hifive1b')
+            return 1
+
+        if offset != 0:
+            LOGGER.error('FLASH: flash offset is not supported with hifive1b')
+            return 1
+
+        firmware_path = firmware_path or self.FW_IDLE
+        LOGGER.info('Flash firmware on Hifive1b: %s', firmware_path)
+        ret_val = self.openocd.flash(firmware_path, binary, offset)
+        return ret_val
