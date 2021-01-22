@@ -40,6 +40,7 @@ import atexit
 from gateway_code import common
 from gateway_code.utils import subprocess_timeout
 
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -91,7 +92,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         common.empty_queue(self._wait_ready)
 
         args = self._cn_interface_args(oml_xml_config)
-        self.process = subprocess_timeout.Popen(args, stderr=PIPE, stdin=PIPE)
+        self.process = subprocess_timeout.Popen(args, encoding='text', stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
@@ -124,7 +125,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         # Save xml configuration in a temporary file
         cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        cfg_file.write(oml_xml_config)
+        cfg_file.write(oml_xml_config.encode())
         cfg_file.flush()
 
         return cfg_file
@@ -217,10 +218,10 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         Reads and handle control node answers
         """
         while self.process.poll() is None:
-            line = self.process.stderr.readline()
+            line = self.process.stderr.readline().strip()
             if line == '':
                 break
-            self._handle_answer(line.strip())
+            self._handle_answer(line)
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
             self._wait_ready.put(1)  # in case of failure at startup
@@ -237,8 +238,8 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             # remove existing items (old not treated answers)
             common.empty_queue(self.msgs)
             try:
-                LOGGER.debug('control_node_cmd: %r', command_args)
-                self.process.stdin.write(command_str)
+                self.process.stdin.write(command_str.encode())
+                self.process.stdin.flush()
                 # wait for answer 1 second at max
                 answer_cn = self.msgs.get(block=True, timeout=1.0)
             except queue.Empty:
