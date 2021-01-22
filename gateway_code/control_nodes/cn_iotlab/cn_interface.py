@@ -26,6 +26,7 @@ Manage sending commands and receiving messages
 """
 
 import queue
+import sys
 import threading
 import logging
 import atexit
@@ -36,6 +37,8 @@ from tempfile import NamedTemporaryFile
 from gateway_code import common
 from gateway_code.utils import subprocess_timeout
 
+# There are encoding issues with Python 3.5
+PY35 = sys.version_info.major == 3 and sys.version_info.minor == 5
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -88,7 +91,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         common.empty_queue(self._wait_ready)
 
         args = self._cn_interface_args(oml_xml_config)
-        self.process = subprocess_timeout.Popen(args, encoding='text', stderr=PIPE, stdin=PIPE)
+        self.process = subprocess_timeout.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
@@ -214,7 +217,10 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         Reads and handle control node answers
         """
         while self.process.poll() is None:
-            line = self.process.stderr.readline().strip()
+            if PY35:
+                line = self.process.stderr.readline().decode().strip()
+            else:
+                line = self.process.stderr.readline().strip()
             if line == '':
                 break
             self._handle_answer(line)
