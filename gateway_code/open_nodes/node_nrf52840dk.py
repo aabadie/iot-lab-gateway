@@ -23,9 +23,10 @@
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
+from gateway_code.open_nodes.common.node_nrf52 import NodeNrf52Base
 
 
-class NodeNrf52840Dk(NodeJLinkBase):
+class NodeNrf52840Dk(NodeNrf52Base, NodeJLinkBase):
     """Open node NRF52840DK implementation"""
 
     TYPE = "nrf52840dk"

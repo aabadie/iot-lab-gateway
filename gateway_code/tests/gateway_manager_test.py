@@ -59,6 +59,24 @@ class TestGatewayManager(unittest.TestCase):
         with pytest.raises(RuntimeError):
             g_m.setup()
 
+    def test_exp_start_firmware_refused(self):
+        """A firmware refused by the open node aborts the experiment"""
+        g_m = gateway_manager.GatewayManager()
+        g_m.open_node.check_firmware = mock.Mock(return_value=False)
+        with mock.patch("gateway_code.utils.elftarget.is_compatible_with_node", return_value=True):
+            assert g_m.exp_start("user", 123, "firmware.elf") == 1
+        g_m.open_node.check_firmware.assert_called_once_with("firmware.elf")
+        assert not g_m.experiment_is_running
+
+    def test_node_flash_firmware_refused(self):
+        """A firmware refused by the node is not flashed"""
+        g_m = gateway_manager.GatewayManager()
+        g_m.open_node.check_firmware = mock.Mock(return_value=False)
+        g_m.open_node.flash = mock.Mock(return_value=0)
+        assert g_m.node_flash("open", "firmware.bin", binary=True, offset=0x1000) == 1
+        g_m.open_node.check_firmware.assert_called_once_with("firmware.bin", True, 0x1000)
+        g_m.open_node.flash.assert_not_called()
+
     def test_exp_update_profile_error(self):
         """Update profile with an invalid profile"""
 

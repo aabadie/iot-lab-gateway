@@ -23,9 +23,10 @@
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
+from gateway_code.open_nodes.common.node_nrf52 import NodeNrf52Base
 
 
-class NodeDwm1001(NodeJLinkBase):
+class NodeDwm1001(NodeNrf52Base, NodeJLinkBase):
     """Open node DWM1001 implementation"""
 
     TYPE = "dwm1001"

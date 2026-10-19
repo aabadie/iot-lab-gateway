@@ -13,6 +13,7 @@ dependencies = [
     "paste",
     "pyserial",
     "pyelftools",
+    "intelhex",
 ]
 
 [project.urls]

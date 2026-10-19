@@ -131,6 +131,9 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         if not elftarget.is_compatible_with_node(firmware_path, self.open_node):
             LOGGER.error("Invalid firmware target, aborting experiment.")
             return 1
+        if firmware_path is not None and not self.open_node.check_firmware(firmware_path):
+            LOGGER.error("Firmware refused, aborting experiment.")
+            return 1
 
         ret_val = 0
 
@@ -343,6 +346,9 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         if not binary and not elftarget.is_compatible_with_node(firmware_path, target_node):
             LOGGER.error("Invalid firmware target, not flashing.")
+            return 1
+        if not target_node.check_firmware(firmware_path, binary, offset):
+            LOGGER.error("Firmware refused, not flashing.")
             return 1
 
         ret = target_node.flash(firmware_path, binary, offset)
