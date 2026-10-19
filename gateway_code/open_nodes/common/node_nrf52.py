@@ -22,7 +22,11 @@
 
 """Common checks of the open nodes based on a nRF52 microcontroller"""
 
+import logging
+
 from gateway_code.utils import nrf52
+
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeNrf52Base:
@@ -33,7 +37,7 @@ class NodeNrf52Base:
     """
 
     def check_firmware(self, firmware_path, binary=False, offset=0):
-        """Return False if the firmware writes the APPROTECT or ERASEPROTECT registers
+        """Return False if the firmware enables the APPROTECT or ERASEPROTECT protection
 
         A binary firmware is flashed at ROM_START_ADDR + offset, as in `flash`.
         """
@@ -41,3 +45,14 @@ class NodeNrf52Base:
             return True
         address = int(self.ROM_START_ADDR) + offset
         return nrf52.check_firmware(firmware_path, binary, address)
+
+    def flash(self, firmware_path=None, binary=False, offset=0):
+        """Flash the firmware, unless it would lock the node
+
+        A refused firmware fails the flash only: an experiment goes on with
+        the firmware already on the node.
+        """
+        if not self.check_firmware(firmware_path, binary, offset):
+            LOGGER.error("Firmware refused, not flashing: %s", firmware_path)
+            return 1
+        return super().flash(firmware_path, binary, offset)

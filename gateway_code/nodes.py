@@ -52,16 +52,6 @@ class NodeBase(with_metaclass(abc.ABCMeta)):
         """Returns the programmer instance of an open node."""
         # pragma: no cover
 
-    def check_firmware(self, firmware_path, binary=False, offset=0):
-        # pylint: disable=unused-argument
-        """Return False if the firmware must not be flashed on this node
-
-        :param firmware_path: Path to the firmware to check
-        :param binary: the firmware is a binary file
-        :param offset: the offset at which the binary file is flashed
-        """
-        return True
-
 
 class ControlNodeBase(NodeBase):
     """Class to inherit, for control node classes"""

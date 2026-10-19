@@ -25,6 +25,7 @@
 import logging
 import os
 
+import mock
 import pytest
 from intelhex import IntelHex
 from testfixtures import LogCapture
@@ -186,5 +187,20 @@ def test_node_check_firmware(tmp_path):
         assert node.check_firmware(firmware, binary=True, offset=0x1000)
         assert not node.check_firmware(firmware, binary=True, offset=nrf52.UICR_APPROTECT)
 
-    node = NodeM3.__new__(NodeM3)
-    assert node.check_firmware(APPROTECT_ELF)
+    assert not hasattr(NodeM3, "check_firmware")
+
+
+@mock.patch("gateway_code.open_nodes.common.node_openocd.NodeOpenOCDBase.flash")
+def test_node_flash(flash, log):
+    """A refused firmware is not flashed, the others are."""
+    flash.return_value = 0
+    node = NodeNrf52Dk.__new__(NodeNrf52Dk)
+
+    assert node.flash(APPROTECT_ELF) == 1
+    flash.assert_not_called()
+    assert log.records[-1].getMessage() == f"Firmware refused, not flashing: {APPROTECT_ELF}"
+
+    assert node.flash(None) == 0
+    flash.assert_called_with(None, False, 0)
+    assert node.flash(NodeNrf52Dk.FW_IDLE) == 0
+    flash.assert_called_with(NodeNrf52Dk.FW_IDLE, False, 0)
