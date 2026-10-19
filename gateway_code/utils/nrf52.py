@@ -23,9 +23,10 @@
 """Check that a firmware for nRF52 boards doesn't lock the debug access.
 
 The UICR registers APPROTECT and ERASEPROTECT of the nRF52 are written
-like flash memory. A firmware that has data at their address enables the
-access port protection (no more debugger, so no more flashing) or the erase
-protection (no more ERASEALL to recover). These firmwares are refused.
+like flash memory. A firmware that writes a value enabling the access port
+protection (no more debugger, so no more flashing) or the erase protection
+(no more ERASEALL to recover) could brick the board: it is refused. Values
+keeping the protection off are accepted.
 """
 
 import logging
@@ -41,10 +42,15 @@ UICR_APPROTECT = 0x10001208
 UICR_ERASEPROTECT = 0x1000120C
 UICR_REGISTER_SIZE = 4
 
+# Field PALL of each register: (mask, values keeping the protection off).
+# APPROTECT: 0xFF Disabled, 0x5A HwDisabled (newer revisions), else enabled.
+# ERASEPROTECT: 0xFFFF Disabled, else enabled.
 PROTECT_REGISTERS = {
-    "APPROTECT": UICR_APPROTECT,
-    "ERASEPROTECT": UICR_ERASEPROTECT,
+    "APPROTECT": (UICR_APPROTECT, 0xFF, (0xFF, 0x5A)),
+    "ERASEPROTECT": (UICR_ERASEPROTECT, 0xFFFF, (0xFFFF,)),
 }
+
+ERASED_BYTE = 0xFF
 
 
 def elf_to_ihex(firmware_path: str) -> IntelHex:
@@ -82,18 +88,28 @@ def firmware_to_ihex(firmware_path: str, binary: bool = False, address: int = 0)
     return elf_to_ihex(firmware_path)
 
 
-def written_protect_registers(ihex: IntelHex) -> List[str]:
-    """Names of the protection registers the memory image writes to."""
-    written = []
-    for name, address in PROTECT_REGISTERS.items():
-        segment = ihex[address : address + UICR_REGISTER_SIZE]
-        if len(segment) > 0:
-            written.append(name)
-    return written
+def register_value(ihex: IntelHex, address: int) -> int:
+    """Little endian 32 bits value written at `address`.
+
+    Bytes not written by the image stay erased (0xFF).
+    """
+    ihex.padding = ERASED_BYTE
+    data = bytes(ihex[addr] for addr in range(address, address + UICR_REGISTER_SIZE))
+    return int.from_bytes(data, "little")
+
+
+def enabled_protect_registers(ihex: IntelHex) -> List[str]:
+    """Names of the protection registers the memory image enables."""
+    enabled = []
+    for name, (address, mask, off_values) in PROTECT_REGISTERS.items():
+        value = register_value(ihex, address)
+        if value & mask not in off_values:
+            enabled.append(name)
+    return enabled
 
 
 def check_firmware(firmware_path: str, binary: bool = False, address: int = 0) -> bool:
-    """Return False if the firmware writes the APPROTECT or ERASEPROTECT registers.
+    """Return False if the firmware enables the APPROTECT or ERASEPROTECT protection.
 
     :param firmware_path: elf firmware, or binary firmware if `binary`
     :param binary: the firmware is a binary file
@@ -105,11 +121,11 @@ def check_firmware(firmware_path: str, binary: bool = False, address: int = 0) -
         LOGGER.error("Invalid firmware: %s", err)
         return False
 
-    written = written_protect_registers(ihex)
-    if written:
+    enabled = enabled_protect_registers(ihex)
+    if enabled:
         LOGGER.error(
-            "Firmware writes the nRF52 UICR %s register(s), refused: it would lock the node",
-            " and ".join(written),
+            "Firmware enables the nRF52 UICR %s protection, refused: it would lock the node",
+            " and ".join(enabled),
         )
         return False
     return True

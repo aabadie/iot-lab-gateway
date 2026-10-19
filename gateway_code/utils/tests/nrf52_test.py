@@ -82,20 +82,52 @@ def test_bin_to_ihex(tmp_path):
     assert ihex.maxaddr() == 0x100F
 
 
-def test_written_protect_registers():
-    """Any byte of a register counts."""
+def put_register(ihex, address, value):
+    """Write a 32 bits little endian register value in the image."""
+    ihex.puts(address, value.to_bytes(4, "little"))
+
+
+def test_register_value():
+    """Bytes not written stay erased."""
     ihex = IntelHex()
-    assert not nrf52.written_protect_registers(ihex)
+    assert nrf52.register_value(ihex, nrf52.UICR_APPROTECT) == 0xFFFFFFFF
+    ihex[nrf52.UICR_APPROTECT] = 0x5A
+    assert nrf52.register_value(ihex, nrf52.UICR_APPROTECT) == 0xFFFFFF5A
 
-    ihex[nrf52.UICR_APPROTECT - 1] = 0xFF
-    ihex[nrf52.UICR_ERASEPROTECT + 4] = 0xFF
-    assert not nrf52.written_protect_registers(ihex)
 
-    ihex[nrf52.UICR_ERASEPROTECT + 3] = 0x00
-    assert nrf52.written_protect_registers(ihex) == ["ERASEPROTECT"]
+@pytest.mark.parametrize(
+    "approtect,eraseprotect,enabled",
+    [
+        (None, None, []),
+        (0xFFFFFFFF, 0xFFFFFFFF, []),
+        (0xFFFFFF5A, None, []),
+        (0x0000005A, None, []),
+        (0x000000FF, 0x0000FFFF, []),
+        (0x00000000, None, ["APPROTECT"]),
+        (0xFFFFFF00, None, ["APPROTECT"]),
+        (0x12345678, None, ["APPROTECT"]),
+        (None, 0x00000000, ["ERASEPROTECT"]),
+        (None, 0xFFFF0000, ["ERASEPROTECT"]),
+        (0x00000000, 0x00000000, ["APPROTECT", "ERASEPROTECT"]),
+    ],
+)
+def test_enabled_protect_registers(approtect, eraseprotect, enabled):
+    """Only the values enabling the protection count."""
+    ihex = IntelHex()
+    ihex[nrf52.UICR_APPROTECT - 1] = 0x00
+    ihex[nrf52.UICR_ERASEPROTECT + 4] = 0x00
+    if approtect is not None:
+        put_register(ihex, nrf52.UICR_APPROTECT, approtect)
+    if eraseprotect is not None:
+        put_register(ihex, nrf52.UICR_ERASEPROTECT, eraseprotect)
+    assert nrf52.enabled_protect_registers(ihex) == enabled
 
-    ihex[nrf52.UICR_APPROTECT] = 0x00
-    assert nrf52.written_protect_registers(ihex) == ["APPROTECT", "ERASEPROTECT"]
+
+def test_enabled_protect_registers_partial():
+    """A single byte enabling the protection counts."""
+    ihex = IntelHex()
+    ihex[nrf52.UICR_ERASEPROTECT + 1] = 0x00
+    assert nrf52.enabled_protect_registers(ihex) == ["ERASEPROTECT"]
 
 
 def test_check_firmware_elf(log):
@@ -109,7 +141,7 @@ def test_check_firmware_elf(log):
         (
             "gateway_code",
             "ERROR",
-            "Firmware writes the nRF52 UICR APPROTECT and ERASEPROTECT register(s), "
+            "Firmware enables the nRF52 UICR APPROTECT and ERASEPROTECT protection, "
             "refused: it would lock the node",
         )
     )
@@ -126,6 +158,14 @@ def test_check_firmware_bin(tmp_path, log):
     assert not nrf52.check_firmware(firmware, binary=True, address=nrf52.UICR_APPROTECT - 15)
     assert not nrf52.check_firmware(firmware, binary=True, address=nrf52.UICR_ERASEPROTECT)
     assert [record.levelname for record in log.records] == ["ERROR", "ERROR"]
+
+
+def test_check_firmware_bin_protection_off(tmp_path, log):
+    """A binary writing the UICR with the protection off is accepted."""
+    path = tmp_path / "uicr.bin"
+    path.write_bytes(bytes([0x5A, 0, 0, 0]) + bytes([0xFF] * 4))
+    assert nrf52.check_firmware(str(path), binary=True, address=nrf52.UICR_APPROTECT)
+    log.check()
 
 
 def test_check_firmware_invalid(tmp_path, log):
