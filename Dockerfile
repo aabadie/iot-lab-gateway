@@ -64,6 +64,8 @@ ARG TARGETARCH
 
 ARG OPENOCD_REV=v0.11.0
 ARG OPENOCD_DEV_REV=7c88e76a76588fa0e3ab645adfc46e8baff6a3e4
+# libjaylink >= 0.5.0 knows the 0x1025 USB PID of recent J-Link OB firmwares
+ARG LIBJAYLINK_REV=0.5.0
 ARG OML_REV=f3bffca8ca721678bcb61a716765ae4f4cae3fd7
 ARG CONTROL_NODE_SERIAL_REV=3eee15a5d48d3e1536e42bd074ad351de6a5334d
 ARG FTDI_UTILS_REV=1.1.0
@@ -151,6 +153,8 @@ RUN . /etc/cross.env && \
 RUN . /etc/cross.env && \
     git_checkout https://github.com/openocd-org/openocd.git ${OPENOCD_DEV_REV} openocd-dev && \
     cd openocd-dev && ./bootstrap && \
+    git -C src/jtag/drivers/libjaylink fetch --quiet --tags && \
+    git -C src/jtag/drivers/libjaylink checkout --quiet ${LIBJAYLINK_REV} && \
     ./configure --host="$HOST" --prefix=/opt/openocd-dev --disable-werror \
         --enable-ftdi --enable-cmsis-dap --enable-hidapi-libusb --enable-jlink && \
     make -j"$(nproc)" && make DESTDIR=/out install
