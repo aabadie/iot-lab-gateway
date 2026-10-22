@@ -5,5 +5,7 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1015", MODE="0664"
 SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1025", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_JLINK"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1025", MODE="0664", GROUP="dialout"
 
-SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1069", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_JLINK"
+# J-Link OB-nRF5340 (nRF54L15-DK): two virtual COM ports, the open node console
+# is the first one
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1069", ENV{ID_USB_INTERFACE_NUM}=="00", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_JLINK"
 SUBSYSTEM=="usb", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1069", MODE="0664", GROUP="dialout"
