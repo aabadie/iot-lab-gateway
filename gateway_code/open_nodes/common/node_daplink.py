@@ -28,6 +28,6 @@ class NodeDapLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
     """Open node DAP Link based board implementation"""
 
-    OPENOCD_SERIAL_CMD = "-c 'cmsis_dap_serial {serial}'"
+    OPENOCD_SERIAL_CMD = "-c 'adapter serial {serial}'"
     TTY = "/dev/iotlab/ttyON_CMSIS_DAP"
     BAUDRATE = 115200

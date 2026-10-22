@@ -41,7 +41,7 @@ class NodeOpenOCDBase(OpenNodeBase):
     ELF_TARGET = ("ELFCLASS32", "EM_ARM")
     ROM_START_ADDR = 0x0
     OPENOCD_CLASS = OpenOCD
-    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    OPENOCD_PATH = "/usr/local/bin/openocd"
     BIND_IP = "0.0.0.0"
 
     AUTOTEST_AVAILABLE = [

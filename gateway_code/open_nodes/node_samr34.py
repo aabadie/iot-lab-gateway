@@ -30,6 +30,5 @@ class NodeSamr34(NodeDapLinkBase):
 
     TYPE = "samr34"
     OPENOCD_CFG_FILE = static_path("iot-lab-samr34.cfg")
-    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
     FW_IDLE = static_path("samr34_idle.elf")
     FW_AUTOTEST = static_path("samr34_autotest.elf")

@@ -62,9 +62,12 @@ FROM --platform=$BUILDPLATFORM debian:${DEBIAN_RELEASE} AS tools
 
 ARG TARGETARCH
 
-ARG OPENOCD_REV=v0.11.0
-ARG OPENOCD_DEV_REV=7c88e76a76588fa0e3ab645adfc46e8baff6a3e4
-# libjaylink >= 0.5.0 knows the 0x1025 USB PID of recent J-Link OB firmwares
+# openocd main revision, nRF54L support
+ARG OPENOCD_REV=5088db4c9154ca833c6d558381074b33672e127a
+# openocd for the m3, a8-m3 and control nodes only
+ARG OPENOCD_LEGACY_REV=7c88e76a76588fa0e3ab645adfc46e8baff6a3e4
+# libjaylink >= 0.5.0 knows the USB PIDs of recent J-Link OB firmwares
+# (0x1025 nRF52840-DK, 0x1069 nRF54L15-DK)
 ARG LIBJAYLINK_REV=0.5.0
 ARG OML_REV=f3bffca8ca721678bcb61a716765ae4f4cae3fd7
 ARG CONTROL_NODE_SERIAL_REV=3eee15a5d48d3e1536e42bd074ad351de6a5334d
@@ -141,21 +144,23 @@ RUN printf '%s\n' \
         > /usr/local/bin/git_checkout && \
     chmod 755 /usr/local/bin/git_checkout
 
-# openocd: /usr/local/bin/openocd (v0.11.0) and /opt/openocd-dev (more
-# recent revision), the paths used by the gateway code
+# openocd: /usr/local/bin/openocd (main revision) for the open nodes and
+# /opt/openocd-legacy for the m3, a8-m3 and control nodes, the paths used
+# by the gateway code
 RUN . /etc/cross.env && \
     git_checkout https://github.com/openocd-org/openocd.git ${OPENOCD_REV} openocd && \
-    cd openocd && ./bootstrap && \
+    cd openocd && ./bootstrap with-submodules && \
+    git -C src/jtag/drivers/libjaylink fetch --quiet --tags && \
+    git -C src/jtag/drivers/libjaylink checkout --quiet ${LIBJAYLINK_REV} && \
     ./configure --host="$HOST" --prefix=/usr/local --disable-werror \
-        --enable-ftdi --enable-cmsis-dap --enable-hidapi-libusb && \
+        --enable-internal-jimtcl --enable-internal-libjaylink \
+        --enable-ftdi --enable-cmsis-dap --enable-hidapi-libusb --enable-jlink && \
     make -j"$(nproc)" && make DESTDIR=/out install
 
 RUN . /etc/cross.env && \
-    git_checkout https://github.com/openocd-org/openocd.git ${OPENOCD_DEV_REV} openocd-dev && \
-    cd openocd-dev && ./bootstrap && \
-    git -C src/jtag/drivers/libjaylink fetch --quiet --tags && \
-    git -C src/jtag/drivers/libjaylink checkout --quiet ${LIBJAYLINK_REV} && \
-    ./configure --host="$HOST" --prefix=/opt/openocd-dev --disable-werror \
+    git_checkout https://github.com/openocd-org/openocd.git ${OPENOCD_LEGACY_REV} openocd-legacy && \
+    cd openocd-legacy && ./bootstrap && \
+    ./configure --host="$HOST" --prefix=/opt/openocd-legacy --disable-werror \
         --enable-ftdi --enable-cmsis-dap --enable-hidapi-libusb --enable-jlink && \
     make -j"$(nproc)" && make DESTDIR=/out install
 
@@ -249,8 +254,6 @@ RUN apt-get update && \
         libusb-1.0-0 \
         libxml2 \
         mosquitto \
-        # openocd 0.12 (/usr/bin/openocd): RP2040 of the rpi-pico open nodes
-        openocd \
         openssh-client \
         python3 \
         python3-bottle \
@@ -300,8 +303,6 @@ RUN apt-get update && \
         avarice \
         curl \
         mosquitto \
-        # openocd 0.12 (/usr/bin/openocd): RP2040 of the rpi-pico open nodes
-        openocd \
         rtl-sdr \
         uhubctl \
         && \

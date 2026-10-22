@@ -28,8 +28,7 @@ class NodeJLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
     """Open node JLink implemention"""
 
-    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
-    OPENOCD_SERIAL_CMD = "-c 'jlink serial {serial}'"
+    OPENOCD_SERIAL_CMD = "-c 'adapter serial {serial}'"
     TTY = "/dev/iotlab/ttyON_JLINK"
     BAUDRATE = 115200
     JLINK_SERIAL = True

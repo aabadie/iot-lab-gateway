@@ -30,6 +30,5 @@ class NodeDwm3001(NodeJLinkBase):
 
     TYPE = "dwm3001"
     OPENOCD_CFG_FILE = static_path("iot-lab-nrf52xxxdk.cfg")
-    OPENOCD_PATH = "/usr/local/bin/openocd"
     FW_IDLE = static_path("dwm3001_idle.elf")
     FW_AUTOTEST = static_path("dwm3001_autotest.elf")
