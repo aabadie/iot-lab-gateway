@@ -30,7 +30,7 @@ keeping the protection off are accepted.
 """
 
 import logging
-from typing import List
+from typing import Dict, List, Optional, Tuple
 
 import elftools.common.exceptions
 from elftools.elf.elffile import ELFFile
@@ -42,10 +42,13 @@ UICR_APPROTECT = 0x10001208
 UICR_ERASEPROTECT = 0x1000120C
 UICR_REGISTER_SIZE = 4
 
+# Protection registers by name: (address, mask, values keeping the protection off)
+ProtectRegisters = Dict[str, Tuple[int, int, Tuple[int, ...]]]
+
 # Field PALL of each register: (mask, values keeping the protection off).
 # APPROTECT: 0xFF Disabled, 0x5A HwDisabled (newer revisions), else enabled.
 # ERASEPROTECT: 0xFFFF Disabled, else enabled.
-PROTECT_REGISTERS = {
+PROTECT_REGISTERS: ProtectRegisters = {
     "APPROTECT": (UICR_APPROTECT, 0xFF, (0xFF, 0x5A)),
     "ERASEPROTECT": (UICR_ERASEPROTECT, 0xFFFF, (0xFFFF,)),
 }
@@ -98,22 +101,37 @@ def register_value(ihex: IntelHex, address: int) -> int:
     return int.from_bytes(data, "little")
 
 
-def enabled_protect_registers(ihex: IntelHex) -> List[str]:
-    """Names of the protection registers the memory image enables."""
+def enabled_protect_registers(
+    ihex: IntelHex, registers: Optional[ProtectRegisters] = None
+) -> List[str]:
+    """Names of the protection registers the memory image enables.
+
+    :param registers: protection registers, as PROTECT_REGISTERS (default)
+    """
+    if registers is None:
+        registers = PROTECT_REGISTERS
     enabled = []
-    for name, (address, mask, off_values) in PROTECT_REGISTERS.items():
+    for name, (address, mask, off_values) in registers.items():
         value = register_value(ihex, address)
         if value & mask not in off_values:
             enabled.append(name)
     return enabled
 
 
-def check_firmware(firmware_path: str, binary: bool = False, address: int = 0) -> bool:
-    """Return False if the firmware enables the APPROTECT or ERASEPROTECT protection.
+def check_firmware(
+    firmware_path: str,
+    binary: bool = False,
+    address: int = 0,
+    registers: Optional[ProtectRegisters] = None,
+    chip: str = "nRF52",
+) -> bool:
+    """Return False if the firmware enables one of the protection registers.
 
     :param firmware_path: elf firmware, or binary firmware if `binary`
     :param binary: the firmware is a binary file
     :param address: flash address of a binary firmware
+    :param registers: protection registers, as PROTECT_REGISTERS (default)
+    :param chip: chip name in the error message
     """
     try:
         ihex = firmware_to_ihex(firmware_path, binary, address)
@@ -121,10 +139,11 @@ def check_firmware(firmware_path: str, binary: bool = False, address: int = 0) -
         LOGGER.error("Invalid firmware: %s", err)
         return False
 
-    enabled = enabled_protect_registers(ihex)
+    enabled = enabled_protect_registers(ihex, registers)
     if enabled:
         LOGGER.error(
-            "Firmware enables the nRF52 UICR %s protection, refused: it would lock the node",
+            "Firmware enables the %s UICR %s protection, refused: it would lock the node",
+            chip,
             " and ".join(enabled),
         )
         return False
