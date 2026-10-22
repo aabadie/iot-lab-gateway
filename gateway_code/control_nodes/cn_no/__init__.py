@@ -81,6 +81,14 @@ class ControlNodeNo(ControlNodeBase):
         ret_val += self.configure_profile(None)
         return ret_val
 
+    def open_start(self, power=None):  # pylint:disable=unused-argument
+        """No open node power control without control node"""
+        return 0
+
+    def open_stop(self, power=None):  # pylint:disable=unused-argument
+        """No open node power control without control node"""
+        return 0
+
     def autotest_setup(self, measures_handler):
         """Setup for autotests."""
         return 0

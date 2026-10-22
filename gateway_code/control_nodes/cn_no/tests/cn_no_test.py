@@ -38,6 +38,8 @@ def test_control_node_no_basic():
     assert cn_no.stop() == 0
     assert cn_no.flash() == 0
     assert cn_no.status() == 0
+    assert cn_no.open_start() == 0
+    assert cn_no.open_stop() == 0
     assert cn_no.autotest_setup(None) == 0
     assert cn_no.autotest_teardown(None) == 0
     assert cn_no.start_experiment("test") == 0
